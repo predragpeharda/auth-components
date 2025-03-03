@@ -1,14 +1,13 @@
 interface HeaderProps {
-  label: string;
+  heading: string;
+  description: string;
 }
 
-export const Header = ({ label }: HeaderProps) => {
+export const Header = ({ heading, description }: HeaderProps) => {
   return (
     <div className="w-full flex flex-col gap-y-4 items-center justify-center">
-      <h1 className="text-2xl font-bold">{label}</h1>
-      <p className="text-balance text-muted-foreground">
-        Sign in to your account!
-      </p>
+      <h1 className="text-2xl font-bold">{heading}</h1>
+      <p className="text-balance text-muted-foreground">{description}</p>
     </div>
   );
 };
