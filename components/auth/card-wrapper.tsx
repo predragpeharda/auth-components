@@ -10,7 +10,7 @@ import { Social } from "@/components/auth/social";
 import { BackButton } from "@/components/auth/back-button";
 
 interface CardWrapperProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   headingLabel: string;
   descriptionLabel: string;
   backButtonLabel: string;
