@@ -5,7 +5,7 @@ export const ErrorCard = () => {
     <CardWrapper
       headingLabel="Oops!"
       descriptionLabel="Something went wrong"
-      backButtonHref="/login"
+      backButtonHref="/auth/login"
       backButtonLabel="Back to login"
       showSocial={false}
     ></CardWrapper>
