@@ -19,6 +19,7 @@ import { FormError } from "@/components/form-error";
 import { FormSuccess } from "@/components/form-success";
 import { login } from "@/actions/login";
 import { useSearchParams } from "next/navigation";
+import { SpinnerCircular } from "spinners-react";
 
 type LoginFormValues = {
   email: string;
@@ -35,6 +36,7 @@ export const LoginForm = () => {
   const [error, setError] = useState<string | undefined>("");
   const [success, setSuccess] = useState<string | undefined>("");
   const [isPending, startTransition] = useTransition();
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(LoginSchema),
@@ -47,12 +49,16 @@ export const LoginForm = () => {
   const onSubmit = (values: LoginFormValues) => {
     setError("");
     setSuccess("");
+    setIsLoading(true);
 
     startTransition(() => {
-      login(values).then((data) => {
-        setError(data?.error);
-        setSuccess(data?.success);
-      });
+      setTimeout(() => {
+        login(values).then((data) => {
+          setError(data?.error);
+          setSuccess(data?.success);
+          setIsLoading(false);
+        });
+      }, 750);
     });
   };
 
@@ -108,10 +114,21 @@ export const LoginForm = () => {
           <FormSuccess message={success} />
           <Button
             disabled={isPending}
-            typeof="submit"
-            className="w-full cursor-pointer "
+            type="submit"
+            className="w-full cursor-pointer"
           >
-            Sign in
+            {isLoading ? (
+              <SpinnerCircular
+                className="animate-spin"
+                size={35}
+                thickness={120}
+                speed={150}
+                color="#f1f1f1"
+                secondaryColor="background-color"
+              />
+            ) : (
+              "Sign in"
+            )}
           </Button>
         </form>
       </Form>
