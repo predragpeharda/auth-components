@@ -13,22 +13,15 @@ interface Provider {
   icon: JSX.Element;
 }
 
-interface SocialProps {
-  gridClassName: string;
-}
-
 const PROVIDERS: Provider[] = [
   { name: "google", icon: <FcGoogle className="size-5" /> },
   { name: "apple", icon: <FaApple className="size-5" /> },
   { name: "github", icon: <FaGithub className="size-5" /> },
-
-  // New providers can be added here
 ];
 
-export const Social = ({ gridClassName }: SocialProps) => {
+export const Social = () => {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
 
-  // Dynamically handles any provider
   const onClick = (provider: string) => {
     setLoading((prev) => ({ ...prev, [provider]: true }));
 
@@ -38,7 +31,7 @@ export const Social = ({ gridClassName }: SocialProps) => {
   };
 
   return (
-    <div className={gridClassName}>
+    <div className="grid grid-cols-3 gap-4 w-full">
       {PROVIDERS.map(({ name, icon }) => (
         <Button
           key={name}

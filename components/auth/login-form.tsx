@@ -1,7 +1,7 @@
 "use client";
 
 import { CardWrapper } from "@/components/auth/card-wrapper";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoginSchema } from "@/schemas";
@@ -21,10 +21,20 @@ import { login } from "@/actions/login";
 import { useSearchParams } from "next/navigation";
 import { SpinnerCircular } from "spinners-react";
 
-type LoginFormValues = {
-  email: string;
-  password: string;
-};
+const INPUT_FIELDS = [
+  {
+    name: "email",
+    label: "Email",
+    type: "email",
+    placeholder: "example@email.com",
+  },
+  {
+    name: "password",
+    label: "Password",
+    type: "password",
+    placeholder: "******",
+  },
+] as const;
 
 export const LoginForm = () => {
   const searchParams = useSearchParams();
@@ -33,34 +43,27 @@ export const LoginForm = () => {
       ? "Email already in use by different provider!"
       : "";
 
-  const [error, setError] = useState<string | undefined>("");
-  const [success, setSuccess] = useState<string | undefined>("");
-  const [isPending, startTransition] = useTransition();
-  const [isLoading, setIsLoading] = useState(false);
+  const [state, setState] = useState<{ error?: string; success?: string }>({});
+  const [loading, startTransition] = useTransition();
 
-  const form = useForm<LoginFormValues>({
+  const form = useForm({
     resolver: zodResolver(LoginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: useMemo(() => ({ email: "", password: "" }), []),
   });
 
-  const onSubmit = (values: LoginFormValues) => {
-    setError("");
-    setSuccess("");
-    setIsLoading(true);
+  const onSubmit = useCallback(
+    async (values: { email: string; password: string }) => {
+      if (state.error || state.success) setState({});
 
-    startTransition(() => {
-      setTimeout(() => {
-        login(values).then((data) => {
-          setError(data?.error);
-          setSuccess(data?.success);
-          setIsLoading(false);
-        });
-      }, 750);
-    });
-  };
+      startTransition(async () => {
+        const data = await login(values);
+        if (data?.error || data?.success) {
+          setState({ error: data?.error, success: data?.success });
+        }
+      });
+    },
+    [state]
+  );
 
   return (
     <CardWrapper
@@ -73,58 +76,41 @@ export const LoginForm = () => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-bold">Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      disabled={isPending}
-                      placeholder="example@email.com"
-                      type="email"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-bold">Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      disabled={isPending}
-                      placeholder="******"
-                      type="password"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {INPUT_FIELDS.map(({ name, label, type, placeholder }) => (
+              <FormField
+                key={name}
+                control={form.control}
+                name={name}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-bold">{label}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        disabled={loading}
+                        placeholder={placeholder}
+                        type={type}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ))}
           </div>
-          <FormError message={error || urlError} />
-          <FormSuccess message={success} />
+          <FormError message={state.error || urlError} />
+          <FormSuccess message={state.success} />
           <Button
-            disabled={isPending}
+            disabled={loading}
             type="submit"
             className="w-full cursor-pointer"
           >
-            {isLoading ? (
+            {loading ? (
               <SpinnerCircular
-                className="animate-spin"
                 size={35}
                 thickness={120}
                 speed={150}
                 color="#f1f1f1"
-                secondaryColor="background-color"
               />
             ) : (
               "Sign in"

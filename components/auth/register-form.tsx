@@ -1,7 +1,7 @@
 "use client";
 
 import { CardWrapper } from "@/components/auth/card-wrapper";
-import { useState, useTransition } from "react";
+import { useTransition, useState, useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RegisterSchema } from "@/schemas";
@@ -18,38 +18,51 @@ import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/form-error";
 import { FormSuccess } from "@/components/form-success";
 import { register } from "@/actions/register";
+import { SpinnerCircular } from "spinners-react";
 
-type RegisterFormValues = {
-  email: string;
-  password: string;
-  name: string;
-};
+const INPUT_FIELDS = [
+  {
+    name: "name",
+    label: "Name",
+    type: "text",
+    placeholder: "First and Last name",
+  },
+  {
+    name: "email",
+    label: "Email",
+    type: "email",
+    placeholder: "example@email.com",
+  },
+  {
+    name: "password",
+    label: "Password",
+    type: "password",
+    placeholder: "******",
+  },
+] as const;
 
 export const RegisterForm = () => {
-  const [error, setError] = useState<string | undefined>("");
-  const [success, setSuccess] = useState<string | undefined>("");
-  const [isPending, startTransition] = useTransition();
+  const [state, setState] = useState<{ error?: string; success?: string }>({});
+  const [loading, startTransition] = useTransition();
 
-  const form = useForm<RegisterFormValues>({
+  const form = useForm({
     resolver: zodResolver(RegisterSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-      name: "",
-    },
+    defaultValues: useMemo(() => ({ name: "", email: "", password: "" }), []),
   });
 
-  const onSubmit = (values: RegisterFormValues) => {
-    setError("");
-    setSuccess("");
+  const onSubmit = useCallback(
+    async (values: { name: string; email: string; password: string }) => {
+      if (state.error || state.success) setState({});
 
-    startTransition(() => {
-      register(values).then((data) => {
-        setError(data.error);
-        setSuccess(data.success);
+      startTransition(async () => {
+        const data = await register(values);
+        if (data?.error || data?.success) {
+          setState({ error: data?.error, success: data?.success });
+        }
       });
-    });
-  };
+    },
+    [state]
+  );
 
   return (
     <CardWrapper
@@ -62,68 +75,45 @@ export const RegisterForm = () => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-bold">Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      disabled={isPending}
-                      placeholder="First and Last name"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-bold">Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      disabled={isPending}
-                      placeholder="example@email.com"
-                      type="email"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-bold">Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      disabled={isPending}
-                      placeholder="******"
-                      type="password"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {INPUT_FIELDS.map(({ name, label, type, placeholder }) => (
+              <FormField
+                key={name}
+                control={form.control}
+                name={name}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-bold">{label}</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        disabled={loading}
+                        type={type}
+                        placeholder={placeholder}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ))}
           </div>
-          <FormError message={error} />
-          <FormSuccess message={success} />
+          <FormError message={state.error} />
+          <FormSuccess message={state.success} />
           <Button
-            disabled={isPending}
-            typeof="submit"
-            className="w-full cursor-pointer "
+            disabled={loading}
+            type="submit"
+            className="w-full cursor-pointer"
           >
-            Sign up
+            {loading ? (
+              <SpinnerCircular
+                size={35}
+                thickness={120}
+                speed={150}
+                color="#f1f1f1"
+              />
+            ) : (
+              "Sign up"
+            )}
           </Button>
         </form>
       </Form>
