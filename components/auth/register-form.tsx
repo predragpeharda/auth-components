@@ -15,8 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { FormError } from "@/components/form-error";
-import { FormSuccess } from "@/components/form-success";
+import { FormError, FormSuccess } from "@/components/form-message";
 import { register } from "@/actions/register";
 import { SpinnerCircular } from "spinners-react";
 
